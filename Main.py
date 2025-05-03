@@ -4,8 +4,11 @@ from discord import app_commands
 from flask import Flask
 import os
 import threading
+
+# Set up Flask app
 app = Flask(__name__)
 
+# Simple route to keep the web service alive
 @app.route('/')
 def home():
     return "Bot is running!"
@@ -15,8 +18,9 @@ def run_flask():
     app.run(host='0.0.0.0', port=80)
 
 # Start Flask server in a thread
-threading.Thread(target=run_flask).
+threading.Thread(target=run_flask).start()
 
+# Set up Discord bot
 intents = discord.Intents.default()
 client = commands.Bot(command_prefix="/", intents=intents)
 
@@ -52,5 +56,6 @@ async def money(interaction: discord.Interaction):
         "Available giftcards: Paysafe, Apple, Amazon, Minecraft, Steam, Fortnite...",
         ephemeral=True
     )
-client.run(os.environ["KEY"])
 
+# Run the bot
+client.run(os.environ["KEY"])
