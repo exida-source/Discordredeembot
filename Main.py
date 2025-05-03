@@ -38,5 +38,5 @@ async def money(interaction: discord.Interaction):
         "Available giftcards: Paysafe, Apple, Amazon, Minecraft, Steam, Fortnite...",
         ephemeral=True
     )
-client.run(KEY)
+client.run(os.environ["KEY"])
 
