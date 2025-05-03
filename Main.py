@@ -1,7 +1,21 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+from flask import Flask
 import os
+import threading
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is running!"
+
+# Function to run the Flask app in a separate thread
+def run_flask():
+    app.run(host='0.0.0.0', port=80)
+
+# Start Flask server in a thread
+threading.Thread(target=run_flask).
 
 intents = discord.Intents.default()
 client = commands.Bot(command_prefix="/", intents=intents)
