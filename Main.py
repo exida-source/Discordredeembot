@@ -32,6 +32,8 @@ class RedeemButton(discord.ui.View):
 
     @discord.ui.button(label="Redeem", style=discord.ButtonStyle.green, custom_id="redeem_button")
     async def redeem_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+    print("Button clicked!")
+
         if interaction.user != self.author:
             await interaction.response.send_message("Only the person who used the command can click this button!", ephemeral=True)
             return
