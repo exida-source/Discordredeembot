@@ -29,34 +29,40 @@ class RedeemButton(discord.ui.View):
     def __init__(self, author):
         super().__init__(timeout=None)
         self.author = author
+        self.button_clicked = False
 
-    @discord.ui.button(label="Redeem", style=discord.ButtonStyle.green)
+    @discord.ui.button(label="Redeem", style=discord.ButtonStyle.green, custom_id="redeem_button")
     async def redeem_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.author:
             await interaction.response.send_message("Only the person who used the command can click this button!", ephemeral=True)
             return
 
-        await interaction.response.send_message("Your request has been sent to the moderators and owners.", ephemeral=True)
+        if self.button_clicked:
+            await interaction.response.send_message("This button has already been used!", ephemeral=True)
+            return
+
+        self.button_clicked = True
+        button.disabled = True
+        await interaction.response.edit_message(view=self)
+
+        await interaction.followup.send("Your request has been sent to the moderators and owners.", ephemeral=True)
 
         guild = interaction.guild
         log_channel = discord.utils.get(guild.text_channels, name="redeem-logs")
-
         if log_channel is None:
             await interaction.followup.send("The 'redeem-logs' channel does not exist!", ephemeral=True)
             return
 
-        roles_to_ping = ["Moderator", "Admin", "Owner"]
-        mentions = []
+        # Replace with your actual Role IDs
+        moderator_role_id = 1360289635363848244
+        admin_role_id = 1360289635363848245
+        owner_role_id = 1360289635363848246
 
-        for role_name in roles_to_ping:
-            role = discord.utils.get(guild.roles, name=role_name)
-            if role:
-                mentions.append(role.mention)
-
-        mention_text = " ".join(mentions)
+        mention_text = f"<@&{moderator_role_id}> <@&{admin_role_id}> <@&{owner_role_id}>"
         message = f"{mention_text}\n**{self.author.mention} just redeemed their reward!**"
 
         await log_channel.send(message)
+
         
 @client.tree.command(name="done", description="Redeem your reward (notifies mods)")
 async def done(interaction: discord.Interaction):
