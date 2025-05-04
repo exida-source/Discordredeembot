@@ -5,13 +5,49 @@ from flask import Flask
 import os
 import threading
 
+
+class RedeemButton(discord.ui.View):
+    def __init__(self, author):
+        super().__init__(timeout=None)
+        self.author = author
+
+    @discord.ui.button(label="Redeem", style=discord.ButtonStyle.green)
+    async def redeem_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.author:
+            await interaction.response.send_message("Only the person who used the command can click this button!", ephemeral=True)
+            return
+
+        await interaction.response.send_message("Your request has been sent to the moderators and owners.", ephemeral=True)
+
+        guild = interaction.guild
+        roles_to_notify = ["Moderator", "Owner"]
+        message = f"{self.author.mention} just redeemed their reward!"
+
+        for member in guild.members:
+            if any(role.name in roles_to_notify for role in member.roles):
+                try:
+                    await member.send(message)
+                except:
+                    print(f"Could not DM {member.name}")
+
+@client.tree.command(name="done", description="Redeem your reward (notifies mods)")
+async def done(interaction: discord.Interaction):
+    view = RedeemButton(interaction.user)
+    await interaction.response.send_message(
+        "**Did you give all needed information to redeem your reward?**\n"
+        "Then click the button below. This will contact Moderators and Owners, who will then get you the reward.\n\n"
+        "**By clicking the button, you state that you are allowed to receive the reward (won a giveaway, etc.). "
+        "If not, you will face a timeout!**",
+        view=view
+    )
+
 # Set up Flask app
 app = Flask(__name__)
 
 # Simple route to keep the web service alive
 @app.route('/')
 def home():
-    return "Bot is running! Good job Exida!"
+    return "Bot is running! Host: ExidaBS!"
 
 # Function to run the Flask app in a separate thread
 def run_flask():
