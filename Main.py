@@ -97,7 +97,7 @@ async def give_points(interaction: discord.Interaction, member: discord.Member, 
     uid = str(member.id)
     points[uid] = points.get(uid, 0) + amount
     save_json(POINTS_FILE, points)
-    await interaction.response.send_message(f"Gave {amount} points to {member.mention}.", ephemeral=True)
+    await interaction.response.send_message(f"Gave {amount} points to {member.mention}.")
 
 # Slash command: check your points
 @client.tree.command(name="check_points", description="Check your points")
