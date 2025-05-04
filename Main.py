@@ -139,6 +139,37 @@ async def points_leaderboard(interaction: discord.Interaction):
         msg += f"{i}. {user.name} — {pts} points\n"
     await interaction.response.send_message(msg)
 
+# Slash command: take points
+@client.tree.command(name="take_points", description="Remove points from a user")
+@app_commands.describe(member="Member to remove points from", amount="Amount to remove")
+async def take_points(interaction: discord.Interaction, member: discord.Member, amount: int):
+    if not is_owner(interaction):
+        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+        return
+
+    uid = str(member.id)
+    current = points.get(uid, 0)
+    points[uid] = max(0, current - amount)
+    save_json(POINTS_FILE, points)
+    await interaction.response.send_message(f"Removed {amount} points from {member.mention}.", ephemeral=True)
+
+# Slash command: delete reward
+@client.tree.command(name="delete_reward", description="Delete a reward from the list")
+@app_commands.describe(name="Name of the reward to delete")
+async def delete_reward(interaction: discord.Interaction, name: str):
+    if not is_owner(interaction):
+        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+        return
+
+    if name not in rewards:
+        await interaction.response.send_message("That reward does not exist.", ephemeral=True)
+        return
+
+    del rewards[name]
+    save_json(REWARDS_FILE, rewards)
+    await interaction.response.send_message(f"Deleted reward **{name}**.", ephemeral=True)
+
+
 # Slash command: redeem points
 @client.tree.command(name="redeem_points", description="Redeem a reward using your points")
 async def redeem_points(interaction: discord.Interaction):
