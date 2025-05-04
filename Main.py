@@ -60,13 +60,12 @@ async def money(interaction: discord.Interaction):
 async def help(interaction: discord.Interaction):
     await interaction.response.send_message(
         "**Existing commands:**"
-  
         "/redeem – redeem rewards in tickets | 👑"
-    
+        "**------------------------------------**"
         "/kr – redeem Krunker KR in Tickets | 💎"
-     
+        "**------------------------------------**"
         "/money – redeem money/giftcards in Tickets | 💸"
-       
+        "**------------------------------------**"
         "/help – View commands | 🤖",
         ephemeral=True
     )
