@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+from datetime import timedelta
 from flask import Flask
 import os
 import threading
@@ -61,6 +62,32 @@ class RedeemButton(discord.ui.View):
         # Log the reward redemption
         message = f"**Someone just redeemed a reward!**\nUser: {self.author.mention}"
         await log_channel.send(message)
+
+
+@client.tree.command(name="en", description="Timeout a member for speaking another language.")
+@app_commands.describe(member="Select the member to timeout")
+async def en(interaction: discord.Interaction, member: discord.Member):
+    # Only allow users with certain roles
+    allowed_roles = ["Moderator", "Admin", "Owner"]
+    user_roles = [role.name for role in interaction.user.roles]
+
+    if not any(role in user_roles for role in allowed_roles):
+        await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
+        return
+
+    # Timeout for 30 minutes
+    try:
+        await member.timeout(timedelta(minutes=30), reason="Spoke another language")
+        await interaction.response.send_message(f"{member.mention} has been timed out for 30 minutes.", ephemeral=True)
+
+        # Log it
+        log_channel = discord.utils.get(interaction.guild.text_channels, name="redeem-logs")
+        if log_channel:
+            await log_channel.send(f"{member.mention} spoke another language.")
+
+    except Exception as e:
+        await interaction.response.send_message(f"Failed to timeout {member.mention}: {e}", ephemeral=True)
+
 
         
 @client.tree.command(name="done", description="Redeem your reward (notifies mods)")
