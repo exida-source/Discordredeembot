@@ -56,19 +56,21 @@ async def money(interaction: discord.Interaction):
         "Available giftcards: Paysafe, Apple, Amazon, Minecraft, Steam, Fortnite...",
         ephemeral=True
     )
-@client.tree.command(name="help", description="Views existing Bot-commands")
+
+@client.tree.command(name="help", description="View available commands")
 async def help(interaction: discord.Interaction):
-    await interaction.response.send_message(
-        "**Existing commands:**"
-        "/redeem – redeem rewards in tickets | 👑"
-        "**------------------------------------**"
-        "/kr – redeem Krunker KR in Tickets | 💎"
-        "**------------------------------------**"
-        "/money – redeem money/giftcards in Tickets | 💸"
-        "**------------------------------------**"
-        "/help – View commands | 🤖",
-        ephemeral=True
+    help_text = (
+        "```"
+        "/redeem – Redeem rewards in tickets     | 👑\n"
+        "----------------------------------------------\n"
+        "/kr     – Redeem Krunker KR in tickets  | 💎\n"
+        "----------------------------------------------\n"
+        "/money  – Redeem money/giftcards         | 💸\n"
+        "----------------------------------------------\n"
+        "/help   – View commands                            | 🤖"
+        "```"
     )
+    await interaction.response.send_message(help_text, ephemeral=True)
 
 # Run the bot
 client.run(os.environ["KEY"])
