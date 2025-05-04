@@ -116,7 +116,7 @@ async def help(interaction: discord.Interaction):
         "/help   – View commands                            | 🤖"
         "```"
     )
-    await interaction.response.send_message(help_text, ephemeral=True)
+    await interaction.response.send_message(help_text)
 
 # Run the bot
 client.run(os.environ["KEY"])
