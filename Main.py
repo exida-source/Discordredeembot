@@ -24,6 +24,7 @@ threading.Thread(target=run_flask).start()
 # Set up Discord bot
 intents = discord.Intents.default()
 client = commands.Bot(command_prefix="/", intents=intents)
+
 class RedeemButton(discord.ui.View):
     def __init__(self, author):
         super().__init__(timeout=None)
@@ -32,7 +33,12 @@ class RedeemButton(discord.ui.View):
 
     @discord.ui.button(label="Redeem", style=discord.ButtonStyle.green, custom_id="redeem_button")
     async def redeem_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        print("Button clicked!")
+        # Debug: send a message when the button is clicked
+        guild = interaction.guild
+        log_channel = discord.utils.get(guild.text_channels, name="redeem-logs")
+
+        if log_channel:
+            await log_channel.send("DEBUG: Button clicked!")
 
         if interaction.user != self.author:
             await interaction.response.send_message("Only the person who used the command can click this button!", ephemeral=True)
@@ -48,16 +54,13 @@ class RedeemButton(discord.ui.View):
 
         await interaction.followup.send("Your request has been sent to the team.", ephemeral=True)
 
-        guild = interaction.guild
-        log_channel = discord.utils.get(guild.text_channels, name="redeem-logs")
-        if log_channel is None:
+        if not log_channel:
             await interaction.followup.send("The 'redeem-logs' channel does not exist!", ephemeral=True)
             return
 
+        # Log the reward redemption
         message = f"**Someone just redeemed a reward!**\nUser: {self.author.mention}"
         await log_channel.send(message)
-
-
 
         
 @client.tree.command(name="done", description="Redeem your reward (notifies mods)")
