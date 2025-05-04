@@ -5,6 +5,28 @@ from datetime import timedelta
 from flask import Flask
 import os
 import threading
+import json
+
+POINTS_FILE = "points.json"
+REWARDS_FILE = "rewards.json"
+
+# Helper functions
+def load_json(file, fallback):
+    if os.path.exists(file):
+        with open(file, "r") as f:
+            return json.load(f)
+    return fallback
+def save_json(file, data):
+    with open(file, "w") as f:
+        json.dump(data, f, indent=4)
+
+points = load_json(POINTS_FILE, {})
+rewards = load_json(REWARDS_FILE, {"Brawl pass": 10000})
+
+def is_owner(interaction):
+    return any(role.name == "Owner" for role in interaction.user.roles)
+
+
 
 
 # Set up Flask app
@@ -62,6 +84,94 @@ class RedeemButton(discord.ui.View):
         # Log the reward redemption
         message = f"**Someone just redeemed a reward!**\nUser: {self.author.mention}"
         await log_channel.send(message)
+
+
+# Slash command: give points
+@client.tree.command(name="give_points", description="Give points to a member")
+@app_commands.describe(member="Select the member", amount="Amount of points")
+async def give_points(interaction: discord.Interaction, member: discord.Member, amount: int):
+    if not is_owner(interaction):
+        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+        return
+
+    uid = str(member.id)
+    points[uid] = points.get(uid, 0) + amount
+    save_json(POINTS_FILE, points)
+    await interaction.response.send_message(f"Gave {amount} points to {member.mention}.", ephemeral=True)
+
+# Slash command: check your points
+@client.tree.command(name="check_points", description="Check your points")
+async def check_points(interaction: discord.Interaction):
+    uid = str(interaction.user.id)
+    user_points = points.get(uid, 0)
+    await interaction.response.send_message(f"You have **{user_points}** points.")
+
+# Slash command: point rewards
+@client.tree.command(name="point_rewards", description="See all available rewards")
+async def point_rewards(interaction: discord.Interaction):
+    if not rewards:
+        await interaction.response.send_message("No rewards available yet.")
+        return
+    msg = "**Available Rewards:**\n"
+    for reward, price in rewards.items():
+        msg += f"- **{reward}** — {price} points\n"
+    await interaction.response.send_message(msg)
+
+# Slash command: add a reward (Owner only)
+@client.tree.command(name="add_reward", description="Add a new reward")
+@app_commands.describe(name="Name of reward", price="Price in points")
+async def add_reward(interaction: discord.Interaction, name: str, price: int):
+    if not is_owner(interaction):
+        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+        return
+
+    rewards[name] = price
+    save_json(REWARDS_FILE, rewards)
+    await interaction.response.send_message(f"Reward **{name}** added for {price} points.", ephemeral=True)
+
+# Slash command: leaderboard
+@client.tree.command(name="points_leaderboard", description="Show top 5 users with most points")
+async def points_leaderboard(interaction: discord.Interaction):
+    top = sorted(points.items(), key=lambda x: x[1], reverse=True)[:5]
+    msg = "**Points Leaderboard:**\n"
+    for i, (uid, pts) in enumerate(top, start=1):
+        user = await client.fetch_user(int(uid))
+        msg += f"{i}. {user.name} — {pts} points\n"
+    await interaction.response.send_message(msg)
+
+# Slash command: redeem points
+@client.tree.command(name="redeem_points", description="Redeem a reward using your points")
+async def redeem_points(interaction: discord.Interaction):
+    uid = str(interaction.user.id)
+    user_points = points.get(uid, 0)
+
+    if not rewards:
+        await interaction.response.send_message("No rewards available.", ephemeral=True)
+        return
+
+    options = [discord.SelectOption(label=reward, description=f"{price} points") for reward, price in rewards.items()]
+    
+    class RewardSelect(discord.ui.View):
+        @discord.ui.select(placeholder="Choose your reward", options=options)
+        async def select_callback(self, select, interaction2):
+            reward_name = select.values[0]
+            price = rewards[reward_name]
+
+            if user_points < price:
+                await interaction2.response.send_message("You don’t have enough points.", ephemeral=True)
+                return
+
+            points[uid] = user_points - price
+            save_json(POINTS_FILE, points)
+
+            # Log redemption
+            log_channel = discord.utils.get(interaction.guild.text_channels, name="redeem-logs")
+            if log_channel:
+                await log_channel.send(f"{interaction.user.mention} redeemed **{reward_name}**!")
+
+            await interaction2.response.send_message(f"You redeemed **{reward_name}**! Please open a ticket and wait for a moderator.")
+
+    await interaction.response.send_message("Choose a reward to redeem:", view=RewardSelect(), ephemeral=True)
 
 
 @client.tree.command(name="en", description="Timeout a member for speaking another language.")
@@ -145,9 +255,18 @@ async def help(interaction: discord.Interaction):
         "----------------------------------------------\n"
         "/money  – Redeem money/giftcards        | 💸\n"
         "----------------------------------------------\n"
-        "/help   – View commands                 | 🤖"
+        "/help   – View commands                 | 🤖\n"
         "----------------------------------------------\n"
         "/done   -Finish redeeming a reward      | 😬\n"
+        "---------------------------------------------\n"
+        "/check_points  -Checks your amount of points \n"
+        "------------------------------------------\n"
+        "/point_rewards  -View available points rewards\n"
+        "-------------------------------------------\n"
+        "/points_leaderboard  -Views the points leaderboard\n"
+        "------------------------------------------------\n"
+        "/redeem_points Redeem a points reward (/point_rewards)\n"
+        
         "```"
     )
     await interaction.response.send_message(help_text)
