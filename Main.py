@@ -169,8 +169,6 @@ async def delete_reward(interaction: discord.Interaction, name: str):
     save_json(REWARDS_FILE, rewards)
     await interaction.response.send_message(f"Deleted reward **{name}**.", ephemeral=True)
 
-
-# Slash command: redeem points
 @client.tree.command(name="redeem_points", description="Redeem a reward using your points")
 async def redeem_points(interaction: discord.Interaction):
     uid = str(interaction.user.id)
@@ -180,54 +178,45 @@ async def redeem_points(interaction: discord.Interaction):
         await interaction.response.send_message("No rewards available.", ephemeral=True)
         return
 
-    options = [discord.SelectOption(label=reward, description=f"{price} points") for reward, price in rewards.items()]
-    
-    class RewardSelect(discord.ui.View):
-        @discord.ui.select(placeholder="Choose your reward", options=options)
-        async def select_callback(self, select, interaction2):
-            reward_name = select.values[0]
+    class RewardSelect(discord.ui.Select):
+        def __init__(self):
+            options = [
+                discord.SelectOption(label=reward, description=f"{price} points")
+                for reward, price in rewards.items()
+            ]
+            super().__init__(placeholder="Choose your reward", options=options, min_values=1, max_values=1)
+
+        async def callback(self, interaction2: discord.Interaction):
+            if interaction2.user.id != interaction.user.id:
+                await interaction2.response.send_message("You can't interact with this menu.", ephemeral=True)
+                return
+
+            reward_name = self.values[0]
             price = rewards[reward_name]
 
             if user_points < price:
                 await interaction2.response.send_message("You don’t have enough points.", ephemeral=True)
                 return
 
-            points[uid] = user_points - price
+            points[uid] -= price
             save_json(POINTS_FILE, points)
 
-            # Log redemption
             log_channel = discord.utils.get(interaction.guild.text_channels, name="redeem-logs")
             if log_channel:
                 await log_channel.send(f"{interaction.user.mention} redeemed **{reward_name}**!")
 
-            await interaction2.response.send_message(f"You redeemed **{reward_name}**! Please open a ticket and wait for a moderator.")
+            await interaction2.response.send_message(
+                f"You redeemed **{reward_name}**! Please open a ticket and wait for a moderator.",
+                ephemeral=True
+            )
 
-    await interaction.response.send_message("Choose a reward to redeem:", view=RewardSelect(), ephemeral=True)
+    class RewardView(discord.ui.View):
+        def __init__(self):
+            super().__init__(timeout=60)
+            self.add_item(RewardSelect())
 
+    await interaction.response.send_message("Choose a reward to redeem:", view=RewardView(), ephemeral=True)
 
-@client.tree.command(name="en", description="Timeout a member for speaking another language.")
-@app_commands.describe(member="Select the member to timeout")
-async def en(interaction: discord.Interaction, member: discord.Member):
-    # Only allow users with certain roles
-    allowed_roles = ["Moderator", "Admin", "Owner"]
-    user_roles = [role.name for role in interaction.user.roles]
-
-    if not any(role in user_roles for role in allowed_roles):
-        await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
-        return
-
-    # Timeout for 30 minutes
-    try:
-        await member.timeout(timedelta(minutes=30), reason="Spoke another language")
-        await interaction.response.send_message(f"{member.mention} has been timed out for 30 minutes.", ephemeral=True)
-
-        # Log it
-        log_channel = discord.utils.get(interaction.guild.text_channels, name="redeem-logs")
-        if log_channel:
-            await log_channel.send(f"{member.mention} spoke another language.")
-
-    except Exception as e:
-        await interaction.response.send_message(f"Failed to timeout {member.mention}: {e}", ephemeral=True)
 
 
         
