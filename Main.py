@@ -39,26 +39,25 @@ class RedeemButton(discord.ui.View):
         await interaction.response.send_message("Your request has been sent to the moderators and owners.", ephemeral=True)
 
         guild = interaction.guild
-        roles_to_notify = ["Moderator", "Owner"]
-        message = f"{self.author.mention} just redeemed their reward!"
+        log_channel = discord.utils.get(guild.text_channels, name="redeem-logs")
 
-        for member in guild.members:
-            if any(role.name in roles_to_notify for role in member.roles):
-                try:
-                    await member.send(message)
-                except:
-                    print(f"Could not DM {member.name}")
+        if log_channel is None:
+            await interaction.followup.send("The 'redeem-logs' channel does not exist!", ephemeral=True)
+            return
 
-@client.tree.command(name="done", description="Redeem your reward (notifies mods)")
-async def done(interaction: discord.Interaction):
-    view = RedeemButton(interaction.user)
-    await interaction.response.send_message(
-        "**Did you give all needed information to redeem your reward?**\n"
-        "Then click the button below. This will contact Moderators and Owners, who will then get you the reward.\n\n"
-        "**By clicking the button, you state that you are allowed to receive the reward (won a giveaway, etc.). "
-        "If not, you will face a timeout!**",
-        view=view
-    )
+        roles_to_ping = ["Moderator", "Admin", "Owner"]
+        mentions = []
+
+        for role_name in roles_to_ping:
+            role = discord.utils.get(guild.roles, name=role_name)
+            if role:
+                mentions.append(role.mention)
+
+        mention_text = " ".join(mentions)
+        message = f"{mention_text}\n**{self.author.mention} just redeemed their reward!**"
+
+        await log_channel.send(message)
+
 
 @client.event
 async def on_ready():
