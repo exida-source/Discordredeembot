@@ -24,7 +24,6 @@ threading.Thread(target=run_flask).start()
 # Set up Discord bot
 intents = discord.Intents.default()
 client = commands.Bot(command_prefix="/", intents=intents)
-
 class RedeemButton(discord.ui.View):
     def __init__(self, author):
         super().__init__(timeout=None)
@@ -45,7 +44,7 @@ class RedeemButton(discord.ui.View):
         button.disabled = True
         await interaction.response.edit_message(view=self)
 
-        await interaction.followup.send("Your request has been sent to the moderators and owners.", ephemeral=True)
+        await interaction.followup.send("Your request has been sent to the team.", ephemeral=True)
 
         guild = interaction.guild
         log_channel = discord.utils.get(guild.text_channels, name="redeem-logs")
@@ -53,15 +52,10 @@ class RedeemButton(discord.ui.View):
             await interaction.followup.send("The 'redeem-logs' channel does not exist!", ephemeral=True)
             return
 
-        # Replace with your actual Role IDs
-        moderator_role_id = 1360289635363848244
-        admin_role_id = 1360289635363848245
-        owner_role_id = 1360289635363848246
-
-        mention_text = f"<@&{moderator_role_id}> <@&{admin_role_id}> <@&{owner_role_id}>"
-        message = f"{mention_text}\n**{self.author.mention} just redeemed their reward!**"
-
+        message = f"**Someone just redeemed a reward!**\nUser: {self.author.mention}"
         await log_channel.send(message)
+
+
 
         
 @client.tree.command(name="done", description="Redeem your reward (notifies mods)")
