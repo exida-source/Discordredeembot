@@ -6,6 +6,25 @@ import os
 import threading
 
 
+# Set up Flask app
+app = Flask(__name__)
+
+# Simple route to keep the web service alive
+@app.route('/')
+def home():
+    return "Bot is running! Host: ExidaBS!"
+
+# Function to run the Flask app in a separate thread
+def run_flask():
+    app.run(host='0.0.0.0', port=80)
+
+# Start Flask server in a thread
+threading.Thread(target=run_flask).start()
+
+# Set up Discord bot
+intents = discord.Intents.default()
+client = commands.Bot(command_prefix="/", intents=intents)
+
 class RedeemButton(discord.ui.View):
     def __init__(self, author):
         super().__init__(timeout=None)
@@ -40,25 +59,6 @@ async def done(interaction: discord.Interaction):
         "If not, you will face a timeout!**",
         view=view
     )
-
-# Set up Flask app
-app = Flask(__name__)
-
-# Simple route to keep the web service alive
-@app.route('/')
-def home():
-    return "Bot is running! Host: ExidaBS!"
-
-# Function to run the Flask app in a separate thread
-def run_flask():
-    app.run(host='0.0.0.0', port=80)
-
-# Start Flask server in a thread
-threading.Thread(target=run_flask).start()
-
-# Set up Discord bot
-intents = discord.Intents.default()
-client = commands.Bot(command_prefix="/", intents=intents)
 
 @client.event
 async def on_ready():
