@@ -59,11 +59,15 @@ async def money(interaction: discord.Interaction):
 @client.tree.command(name="help", description="Views existing Bot-commands")
 async def help(interaction: discord.Interaction):
     await interaction.response.send_message(
-        "**Verfügbare Befehle:**\n"
-        "/redeem – redeem rewards in tickets"
-        "/kr – redeem Krunker KR in Tickets"
-        "/money – redeem money/giftcards in Tickets"
-        "/help – View commands",
+        "**Existing commands:**"
+  
+        "/redeem – redeem rewards in tickets | 👑"
+    
+        "/kr – redeem Krunker KR in Tickets | 💎"
+     
+        "/money – redeem money/giftcards in Tickets | 💸"
+       
+        "/help – View commands | 🤖",
         ephemeral=True
     )
 
