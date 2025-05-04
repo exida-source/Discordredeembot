@@ -38,7 +38,7 @@ class RedeemButton(discord.ui.View):
         log_channel = discord.utils.get(guild.text_channels, name="redeem-logs")
 
         if log_channel:
-            await log_channel.send("DEBUG: Button clicked!")
+            await log_channel.send("@Moderator , @Owner , @Admin Someone has just redeemed a reward!")
 
         if interaction.user != self.author:
             await interaction.response.send_message("Only the person who used the command can click this button!", ephemeral=True)
