@@ -11,7 +11,7 @@ app = Flask(__name__)
 # Simple route to keep the web service alive
 @app.route('/')
 def home():
-    return "Bot is running!"
+    return "Bot is running! Good job Exida!"
 
 # Function to run the Flask app in a separate thread
 def run_flask():
@@ -33,7 +33,7 @@ async def on_ready():
     except Exception as e:
         print(f"Fehler beim Synchronisieren der Befehle: {e}")
 
-@client.tree.command(name="redeem", description="Beginne mit dem Einlösen deiner Belohnung")
+@client.tree.command(name="redeem", description="Guides you step by step to redeem your reward")
 async def redeem(interaction: discord.Interaction):
     await interaction.response.send_message(
         "Please enter the type of reward you want to redeem! /kr or /money ! "
@@ -41,7 +41,7 @@ async def redeem(interaction: discord.Interaction):
         ephemeral=True
     )
 
-@client.tree.command(name="kr", description="Krunker KR einlösen")
+@client.tree.command(name="kr", description="redeem Krunker KR")
 async def kr(interaction: discord.Interaction):
     await interaction.response.send_message(
         "Please enter your Krunker ingame-name and the amount of KR you wish to redeem. "
@@ -49,11 +49,21 @@ async def kr(interaction: discord.Interaction):
         ephemeral=True
     )
 
-@client.tree.command(name="money", description="Geld einlösen")
+@client.tree.command(name="money", description="Redeem money/giftcards")
 async def money(interaction: discord.Interaction):
     await interaction.response.send_message(
         "Please enter how you wish to be paid: Paysafe or giftcard - "
         "Available giftcards: Paysafe, Apple, Amazon, Minecraft, Steam, Fortnite...",
+        ephemeral=True
+    )
+@client.tree.command(name="help", description="Views existing Bot-commands")
+async def help(interaction: discord.Interaction):
+    await interaction.response.send_message(
+        "**Verfügbare Befehle:**\n"
+        "/redeem – redeem rewards in tickets"
+        "/kr – redeem Krunker KR in Tickets"
+        "/money – redeem money/giftcards in Tickets"
+        "/help – View commands",
         ephemeral=True
     )
 
