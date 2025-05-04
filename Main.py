@@ -57,6 +57,17 @@ class RedeemButton(discord.ui.View):
         message = f"{mention_text}\n**{self.author.mention} just redeemed their reward!**"
 
         await log_channel.send(message)
+        
+@client.tree.command(name="done", description="Redeem your reward (notifies mods)")
+async def done(interaction: discord.Interaction):
+    view = RedeemButton(interaction.user)
+    await interaction.response.send_message(
+        "**Did you give all needed information to redeem your reward?**\n"
+        "Then click the button below. This will contact Moderators and Owners, who will then get you the reward.\n\n"
+        "**By clicking the button, you state that you are allowed to receive the reward (won a giveaway, etc.). "
+        "If not, you will face a timeout!**",
+        view=view
+    )
 
 
 @client.event
