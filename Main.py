@@ -38,7 +38,7 @@ class RedeemButton(discord.ui.View):
         log_channel = discord.utils.get(guild.text_channels, name="redeem-logs")
 
         if log_channel:
-            await log_channel.send("@Moderator , @Owner , @Admin Someone has just redeemed a reward!")
+            await log_channel.send("<@&1360289635363848244> , <@&1360289635363848245> , <@&1360289635363848246> Someone has just redeemed a reward!")
 
         if interaction.user != self.author:
             await interaction.response.send_message("Only the person who used the command can click this button!", ephemeral=True)
@@ -96,7 +96,7 @@ async def redeem(interaction: discord.Interaction):
 async def kr(interaction: discord.Interaction):
     await interaction.response.send_message(
         "Please enter your Krunker ingame-name and the amount of KR you wish to redeem. "
-        "Then list any item for me to buy with that amount of KR!",
+        "Then list any item for me to buy with that amount of KR! When you're done, use the /done command to lock it in!",
         ephemeral=True
     )
 
@@ -104,7 +104,7 @@ async def kr(interaction: discord.Interaction):
 async def money(interaction: discord.Interaction):
     await interaction.response.send_message(
         "Please enter how you wish to be paid: Paysafe or giftcard - "
-        "Available giftcards: Paysafe, Apple, Amazon, Minecraft, Steam, Fortnite...",
+        "Available giftcards: Paysafe, Apple, Amazon, Minecraft, Steam, Fortnite... When you're done, use the /dobe command to lock it in",
         ephemeral=True
     )
 
@@ -116,9 +116,11 @@ async def help(interaction: discord.Interaction):
         "----------------------------------------------\n"
         "/kr     – Redeem Krunker KR in tickets  | 💎\n"
         "----------------------------------------------\n"
-        "/money  – Redeem money/giftcards         | 💸\n"
+        "/money  – Redeem money/giftcards        | 💸\n"
         "----------------------------------------------\n"
-        "/help   – View commands                            | 🤖"
+        "/help   – View commands                 | 🤖"
+        "----------------------------------------------\n"
+        "/done   -Finish redeeming a reward      | 😬\n"
         "```"
     )
     await interaction.response.send_message(help_text)
