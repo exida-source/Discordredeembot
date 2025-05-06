@@ -412,41 +412,5 @@ async def on_member_join(member):
 @client.event
 async def on_member_remove(member):
     await update_leaderboard_message(member.guild)
-@client.tree.command(name="give_all", description="Give an amount of points to members with a specific role (owner only)")
-@app_commands.describe(amount="Amount of points to give to members with the role")
-async def give_all(interaction: discord.Interaction, amount: int):
-    try:
-        if not is_owner(interaction):
-            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
-            return
 
-        role_id = 1360289635343012075  # Role ID you want to target
-        role = discord.utils.get(interaction.guild.roles, id=role_id)
-
-        if not role:
-            await interaction.response.send_message("The role with the specified ID does not exist.", ephemeral=True)
-            return
-
-        count = 0
-        progress_msg = await interaction.response.send_message(f"Giving {amount} points to members with the role '{role.name}'...")
-
-        # Loop through all members and check if they have the role
-        for member in interaction.guild.members:
-            if role in member.roles and not member.bot:  # Skip bots
-                uid = str(member.id)
-                points[uid] = points.get(uid, 0) + amount
-                count += 1
-
-                # Update the progress message after every 10 members
-                if count % 10 == 0:
-                    await progress_msg.edit(content=f"Giving {amount} points to {count} members with the role '{role.name}'...")
-
-        save_json(POINTS_FILE, points)
-        await progress_msg.edit(content=f"{interaction.user.display_name} gave {amount} points to {count} members with the role '{role.name}'.")
-        await update_leaderboard(interaction.guild)  # Optional: update the leaderboard after giving points
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        await interaction.response.send_message("An error occurred while processing the request. Please try again later.", ephemeral=True)
-
-# Run the bot
 client.run(os.environ["KEY"])
