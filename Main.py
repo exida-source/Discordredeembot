@@ -272,6 +272,24 @@ async def on_ready():
     except Exception as e:
         print(f"Fehler beim Synchronisieren der Befehle: {e}")
 
+    # Leaderboard chart setup
+    leaderboard_channel = discord.utils.get(client.get_all_channels(), name="owner-only")
+    if leaderboard_channel is None:
+        print("Channel #owner-only not found.")
+        return
+
+    leaderboard_data_file = "leaderboard_message.json"
+    if not os.path.exists(leaderboard_data_file):
+        # First time: send a new leaderboard message
+        msg = await leaderboard_channel.send("Initializing leaderboard...")
+        with open(leaderboard_data_file, "w") as f:
+            json.dump({"channel_id": msg.channel.id, "message_id": msg.id}, f)
+        print("Leaderboard message created and saved.")
+        await update_leaderboard()
+    else:
+        print("Leaderboard message already exists.")
+
+
 @client.tree.command(name="redeem", description="Guides you step by step to redeem your reward")
 async def redeem(interaction: discord.Interaction):
     await interaction.response.send_message(
