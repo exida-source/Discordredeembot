@@ -9,6 +9,13 @@ import json
 
 POINTS_FILE = "points.json"
 REWARDS_FILE = "rewards.json"
+LEADERBOARD_FILE = "leaderboard_message.json"
+
+def save_leaderboard_msg_id(data):
+    save_json(LEADERBOARD_FILE, data)
+
+def load_leaderboard_msg_id():
+    return load_json(LEADERBOARD_FILE, {})
 
 # Helper functions
 def load_json(file, fallback):
@@ -93,6 +100,8 @@ async def give_points(interaction: discord.Interaction, member: discord.Member, 
     if not is_owner(interaction):
         await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
         return
+        await update_leaderboard_message(interaction.guild)
+
 
     uid = str(member.id)
     points[uid] = points.get(uid, 0) + amount
@@ -146,7 +155,9 @@ async def take_points(interaction: discord.Interaction, member: discord.Member, 
     if not is_owner(interaction):
         await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
         return
+        await update_leaderboard_message(interaction.guild)
 
+        
     uid = str(member.id)
     current = points.get(uid, 0)
     points[uid] = max(0, current - amount)
@@ -200,6 +211,8 @@ async def redeem_points(interaction: discord.Interaction):
 
             points[uid] -= price
             save_json(POINTS_FILE, points)
+            await update_leaderboard_message(interaction.guild)
+
 
             log_channel = discord.utils.get(interaction.guild.text_channels, name="redeem-logs")
             if log_channel:
@@ -217,6 +230,24 @@ async def redeem_points(interaction: discord.Interaction):
 
     await interaction.response.send_message("Choose a reward to redeem:", view=RewardView(), ephemeral=True)
 
+@client.tree.command(name="raw_points", description="View all raw points data")
+async def raw_points(interaction: discord.Interaction):
+    if not is_owner(interaction):
+        await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
+        return
+
+    summary = ""
+    for uid, pts in points.items():
+        try:
+            user = await client.fetch_user(int(uid))
+            summary += f"{user.name} ({uid}): {pts} points\n"
+        except:
+            summary += f"Unknown User ({uid}): {pts} points\n"
+
+    if not summary:
+        summary = "No points data found."
+
+    await interaction.response.send_message(f"```{summary[:1950]}```", ephemeral=True)
 
 
         
@@ -290,6 +321,40 @@ async def help(interaction: discord.Interaction):
         "```"
     )
     await interaction.response.send_message(help_text)
+async def update_leaderboard_message(guild):
+    channel = discord.utils.get(guild.text_channels, name="owner-only")
+    if not channel:
+        return
+
+    data = load_leaderboard_msg_id()
+    msg_id = data.get("message_id")
+
+    leaderboard_text = "**Current Points Table**\n\n"
+    sorted_points = sorted(points.items(), key=lambda x: x[1], reverse=True)
+
+    for uid, pts in sorted_points:
+        member = guild.get_member(int(uid))
+        if member:
+            leaderboard_text += f"**{member.display_name}** — {pts} points\n"
+
+    if msg_id:
+        try:
+            msg = await channel.fetch_message(msg_id)
+            await msg.edit(content=leaderboard_text)
+        except discord.NotFound:
+            msg = await channel.send(leaderboard_text)
+            save_leaderboard_msg_id({"message_id": msg.id})
+    else:
+        msg = await channel.send(leaderboard_text)
+        save_leaderboard_msg_id({"message_id": msg.id})
+
+@client.event
+async def on_member_join(member):
+    await update_leaderboard_message(member.guild)
+
+@client.event
+async def on_member_remove(member):
+    await update_leaderboard_message(member.guild)
 
 # Run the bot
 client.run(os.environ["KEY"])
