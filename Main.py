@@ -412,24 +412,33 @@ async def on_member_join(member):
 @client.event
 async def on_member_remove(member):
     await update_leaderboard_message(member.guild)
-@client.tree.command(name="give_all", description="Give points to all members")
-@app_commands.describe(amount="Amount of points to give to everyone")
+@client.tree.command(name="give_all", description="Give an amount of points to members with a specific role (owner only)")
+@app_commands.describe(amount="Amount of points to give to members with the role")
 async def give_all(interaction: discord.Interaction, amount: int):
     if not is_owner(interaction):
         await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
         return
 
-    updated_count = 0
+    role_id = 1360289635343012075  # Role ID you want to target
+    role = discord.utils.get(interaction.guild.roles, id=role_id)
+
+    if not role:
+        await interaction.response.send_message("The role with the specified ID does not exist.", ephemeral=True)
+        return
+
+    count = 0
+
+    # Loop through all members and check if they have the role
     for member in interaction.guild.members:
-        if not member.bot:
+        if role in member.roles and not member.bot:  # Skip bots
             uid = str(member.id)
             points[uid] = points.get(uid, 0) + amount
-            updated_count += 1
+            count += 1
 
     save_json(POINTS_FILE, points)
-    await update_leaderboard()
+    await interaction.response.send_message(f"{interaction.user.display_name} gave {amount} points to {count} members with the role '{role.name}'.")
+    await update_leaderboard(interaction.guild)  # Optional: update the leaderboard after giving points
 
-    await interaction.response.send_message(f"Gave **{amount}** points to **{updated_count}** members.")
 
 # Run the bot
 client.run(os.environ["KEY"])
