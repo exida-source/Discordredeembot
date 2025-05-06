@@ -427,6 +427,7 @@ async def give_all(interaction: discord.Interaction, amount: int):
         return
 
     count = 0
+    progress_msg = await interaction.response.send_message(f"Giving {amount} points to members with the role '{role.name}'...")
 
     # Loop through all members and check if they have the role
     for member in interaction.guild.members:
@@ -435,8 +436,12 @@ async def give_all(interaction: discord.Interaction, amount: int):
             points[uid] = points.get(uid, 0) + amount
             count += 1
 
+            # Update the progress message after every 10 members
+            if count % 10 == 0:
+                await progress_msg.edit(content=f"Giving {amount} points to {count} members with the role '{role.name}'...")
+
     save_json(POINTS_FILE, points)
-    await interaction.response.send_message(f"{interaction.user.display_name} gave {amount} points to {count} members with the role '{role.name}'.")
+    await progress_msg.edit(content=f"{interaction.user.display_name} gave {amount} points to {count} members with the role '{role.name}'.")
     await update_leaderboard(interaction.guild)  # Optional: update the leaderboard after giving points
 
 
