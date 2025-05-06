@@ -53,7 +53,8 @@ threading.Thread(target=run_flask).start()
 
 # Set up Discord bot
 intents = discord.Intents.default()
-client = commands.Bot(command_prefix="/", intents=intents)
+intents.members = True  # <-- Add this line
+
 
 class RedeemButton(discord.ui.View):
     def __init__(self, author):
