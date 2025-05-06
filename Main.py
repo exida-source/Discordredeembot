@@ -10,6 +10,11 @@ import json
 POINTS_FILE = "points.json"
 REWARDS_FILE = "rewards.json"
 
+intents = discord.Intents.default()
+intents.members = True
+intents.message_content = True
+intents.guilds = True
+
 # Helper functions
 def load_json(file, fallback):
     if os.path.exists(file):
