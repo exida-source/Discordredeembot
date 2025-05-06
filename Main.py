@@ -9,13 +9,6 @@ import json
 
 POINTS_FILE = "points.json"
 REWARDS_FILE = "rewards.json"
-LEADERBOARD_FILE = "leaderboard_message.json"
-
-def save_leaderboard_msg_id(data):
-    save_json(LEADERBOARD_FILE, data)
-
-def load_leaderboard_msg_id():
-    return load_json(LEADERBOARD_FILE, {})
 
 # Helper functions
 def load_json(file, fallback):
@@ -100,14 +93,14 @@ async def give_points(interaction: discord.Interaction, member: discord.Member, 
     if not is_owner(interaction):
         await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
         return
-        await update_leaderboard()
+        
 
 
     uid = str(member.id)
     points[uid] = points.get(uid, 0) + amount
     save_json(POINTS_FILE, points)
     await interaction.response.send_message(f"Gave {amount} points to {member.mention}.")
-async def update_leaderboard():
+
 
 # Slash command: check your points
 @client.tree.command(name="check_points", description="Check your points")
@@ -156,7 +149,7 @@ async def take_points(interaction: discord.Interaction, member: discord.Member, 
     if not is_owner(interaction):
         await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
         return
-        await update_leaderboard()
+        
 
         
     uid = str(member.id)
@@ -212,7 +205,7 @@ async def redeem_points(interaction: discord.Interaction):
 
             points[uid] -= price
             save_json(POINTS_FILE, points)
-            await update_leaderboard()
+            
 
 
             log_channel = discord.utils.get(interaction.guild.text_channels, name="redeem-logs")
