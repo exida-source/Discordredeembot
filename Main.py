@@ -100,13 +100,51 @@ async def give_points(interaction: discord.Interaction, member: discord.Member, 
     if not is_owner(interaction):
         await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
         return
-        await update_leaderboard_message(interaction.guild)
+        await update_leaderboard()
 
 
     uid = str(member.id)
     points[uid] = points.get(uid, 0) + amount
     save_json(POINTS_FILE, points)
     await interaction.response.send_message(f"Gave {amount} points to {member.mention}.")
+async def update_leaderboard():
+    leaderboard_data_file = "leaderboard_message.json"
+    if not os.path.exists(leaderboard_data_file):
+        print("Leaderboard message file not found.")
+        return
+
+    with open(leaderboard_data_file, "r") as f:
+        data = json.load(f)
+
+    channel = client.get_channel(data["channel_id"])
+    if not channel:
+        print("Leaderboard channel not found.")
+        return
+
+    try:
+        message = await channel.fetch_message(data["message_id"])
+    except discord.NotFound:
+        print("Leaderboard message not found.")
+        return
+
+    # Build the leaderboard table
+    if not points:
+        content = "No points data available."
+    else:
+        sorted_points = sorted(points.items(), key=lambda x: x[1], reverse=True)
+        lines = ["**Current Points Leaderboard**"]
+        for uid, pts in sorted_points:
+            try:
+                user = await client.fetch_user(int(uid))
+                name = user.name
+            except:
+                name = f"User ({uid})"
+            lines.append(f"- **{name}**: {pts} points")
+
+        content = "\n".join(lines)
+
+    await message.edit(content=content)
+
 
 # Slash command: check your points
 @client.tree.command(name="check_points", description="Check your points")
@@ -155,7 +193,7 @@ async def take_points(interaction: discord.Interaction, member: discord.Member, 
     if not is_owner(interaction):
         await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
         return
-        await update_leaderboard_message(interaction.guild)
+        await update_leaderboard()
 
         
     uid = str(member.id)
@@ -211,7 +249,7 @@ async def redeem_points(interaction: discord.Interaction):
 
             points[uid] -= price
             save_json(POINTS_FILE, points)
-            await update_leaderboard_message(interaction.guild)
+            await update_leaderboard()
 
 
             log_channel = discord.utils.get(interaction.guild.text_channels, name="redeem-logs")
@@ -373,6 +411,24 @@ async def on_member_join(member):
 @client.event
 async def on_member_remove(member):
     await update_leaderboard_message(member.guild)
+@client.tree.command(name="give_all", description="Give points to all members")
+@app_commands.describe(amount="Amount of points to give to everyone")
+async def give_all(interaction: discord.Interaction, amount: int):
+    if not is_owner(interaction):
+        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+        return
+
+    updated_count = 0
+    for member in interaction.guild.members:
+        if not member.bot:
+            uid = str(member.id)
+            points[uid] = points.get(uid, 0) + amount
+            updated_count += 1
+
+    save_json(POINTS_FILE, points)
+    await update_leaderboard()
+
+    await interaction.response.send_message(f"Gave **{amount}** points to **{updated_count}** members.")
 
 # Run the bot
 client.run(os.environ["KEY"])
